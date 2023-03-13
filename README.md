@@ -1,4 +1,4 @@
- Hello there 👋, I am Itqan, an actuarial science graduate from University of London. I am interested in data analytics, particularly machine learning and web scraping! 
+ Hello there 👋, I am Itqan, an actuarial science graduate from Queen Mary university of London. I am interested in data analytics, machine learning and automation! 
  I mainly code in R and SQL in my data analysis project and currently transferring my skills into Python.
 
 
