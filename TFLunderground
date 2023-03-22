@@ -1,0 +1,40 @@
+# Load libraries
+library(tidyverse)
+library(sf)
+library(leaflet)
+
+# Read in CSV files
+csv_fp_dict <- list.files(path = "./input", pattern = "*.csv", full.names = TRUE) %>%
+  set_names(str_sub(basename(.), 1, 4)) %>%
+  map_dfr(read_csv) %>%
+  mutate(year = str_sub(year, 1, 4))
+
+# Read in geojson file
+geojson_fp <- "./input/stations.geojson"
+stations_sf <- st_read(geojson_fp)
+
+# Clean CSV data
+clean_csv <- csv_fp_dict %>%
+  mutate(Station = str_remove(Station, "\\(.*\\)"), # remove station codes
+         Station = str_trim(Station), # remove leading/trailing whitespace
+         Station[Station == "Bank & Monument"] <- "Bank", # combine station names
+         Entry_Week = as.numeric(Entry_Week),
+         Exit_Sunday = as.numeric(Exit_Sunday)) %>%
+  filter(!is.na(lat)) # remove stations with missing latitude/longitude
+
+# Combine CSV data with geojson data
+stations_sf_join <- stations_sf %>%
+  st_as_sf() %>%
+  inner_join(clean_csv, by = c("name" = "Station"))
+
+# Create leaflet map
+leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addCircles(lng = ~long, lat = ~lat, weight = 1,
+             radius = ~Entry_Week / 50, fillOpacity = 0.6,
+             color = ~Exit_Sunday, stroke = FALSE,
+             data = stations_sf_join) %>%
+  addLegend("bottomright", title = "Exits (Sunday)",
+            colors = colorNumeric("jet", domain = stations_sf_join$Exit_Sunday)) %>%
+  addMarkers(lng = ~long, lat = ~lat, popup = ~name,
+             data = stations_sf_join)
